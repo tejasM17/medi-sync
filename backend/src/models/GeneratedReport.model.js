@@ -8,8 +8,8 @@ const generatedReportSchema = new mongoose.Schema({
   contentMarkdown: String,
   pdfUrl: String,
   isSentToPatient: { type: Boolean, default: false },
-sentAt: Date,
-sentVia: { type: String, default: 'EmailJS' }
+  sentAt: Date,
+  sentVia: { type: String, default: 'EmailJS' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('GeneratedReport', generatedReportSchema);

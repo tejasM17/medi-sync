@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-
+const webhookRoutes = require('./src/routes/webhook.routes');
 const connectDB = require('./src/config/db.config');
 
 dotenv.config();
@@ -32,6 +32,8 @@ app.get('/health', (req, res) => res.json({ status: "OK" }));
 // Connect Database & Start Server
 const startServer = async () => {
   await connectDB();
+
+  app.use('/api/webhook', webhookRoutes);
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
