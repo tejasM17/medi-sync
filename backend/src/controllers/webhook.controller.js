@@ -1,6 +1,7 @@
 // backend/src/controllers/webhook.controller.js
 const IncomingEmail = require('../models/IncomingEmail.model');
 const Patient = require('../models/Patient.model');
+const { triageQueue } = require('../queues/triage.queue');
 
 const receiveEmail = async (req, res) => {
   try {
@@ -26,12 +27,23 @@ const receiveEmail = async (req, res) => {
       status: 'Received'
     });
 
+    // After creating emailDoc
+await triageQueue.add('process-triage', {
+  emailId: emailDoc._id,
+  patientId: patient._id,
+  body: body
+});
+
+console.log(`📤 Email queued for AI triage: ${emailDoc._id}`);
+
     res.status(201).json({
       success: true,
       message: "Email received successfully and queued for AI triage",
       emailId: emailDoc._id,
       patientId: patient._id
     });
+
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });
