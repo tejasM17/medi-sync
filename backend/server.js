@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const webhookRoutes = require('./src/routes/webhook.routes');
 const connectDB = require('./src/config/db.config');
+const reportsRoutes = require('./src/routes/reports.routes');
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ const startServer = async () => {
   await connectDB();
 
   app.use('/api/webhook', webhookRoutes);
+  app.use('/api/reports', reportsRoutes);
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

@@ -1,37 +1,31 @@
-// backend/src/queues/triage.queue.js
-const { Queue, Worker } = require('bullmq');
-const Redis = require('ioredis');
+const EmailParserAgent = require('../services/agents/EmailParserAgent');
+const ResearcherAgent = require('../services/agents/ResearcherAgent');
+const TriageReportAgent = require('../services/agents/TriageReportAgent');
+const Patient = require('../models/Patient.model');
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+const triageQueue = {
+  add: async (name, data) => {
+    console.log(`🚀 [Orchestrator] Starting Multi-Agent Pipeline for email ${data.emailId}`);
 
-const triageQueue = new Queue('triage-queue', { connection });
+    setTimeout(async () => {
+      try {
+        const patient = await Patient.findById(data.patientId);
 
-console.log('✅ BullMQ Queue Initialized');
+        // Agent 1
+        const parserResult = await EmailParserAgent.parse(data.body);
 
-// Worker to process triage
-const triageWorker = new Worker('triage-queue', async (job) => {
-  console.log(`🔄 Processing triage for email: ${job.data.emailId}`);
-  
-  // TODO: Call AI Agents here (Phase 11)
-  const result = {
-    urgencyLevel: "Urgent",
-    urgencyScore: 75,
-    summary: "Patient reports severe headache with blurred vision - needs prompt evaluation.",
-    recommendations: ["Immediate consultation recommended", "Rule out neurological issues"]
-  };
+        // Agent 2
+        const researchResult = await ResearcherAgent.research(parserResult.rawSymptoms);
 
-  console.log("✅ Triage Completed:", result);
-  return result;
-}, { connection });
+        // Agent 3 (Coordinator)
+        const finalResult = await TriageReportAgent.process(parserResult, researchResult, patient, data);
 
-triageWorker.on('completed', (job) => {
-  console.log(`🎉 Job ${job.id} completed successfully`);
-});
-
-triageWorker.on('failed', (job, err) => {
-  console.error(`❌ Job ${job.id} failed:`, err);
-});
+        console.log(`🎉 [Multi-Agent Complete] Report Generated: ${finalResult.report._id}`);
+      } catch (err) {
+        console.error("❌ Multi-Agent Pipeline Failed:", err);
+      }
+    }, 2500);
+  }
+};
 
 module.exports = { triageQueue };

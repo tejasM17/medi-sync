@@ -1,35 +1,73 @@
 // backend/src/services/reportGenerator.service.js
 const GeneratedReport = require('../models/GeneratedReport.model');
-const pdfLib = require('pdf-lib'); // We'll use simple markdown for now
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 
 class ReportGeneratorService {
-  async generateReport(triageResult, patient, email) {
+  
+  async generatePDF(triageResult, patient) {
     try {
-      const report = await GeneratedReport.create({
-        triageReportId: null, // Will link later
-        patientId: patient._id,
-        doctorId: null, // Add doctor later
-        title: `Medical Triage Report - ${new Date().toLocaleDateString()}`,
-        contentMarkdown: `
-**Patient:** ${patient.email}
-**Urgency:** ${triageResult.urgencyLevel} (${triageResult.urgencyScore}%)
-**Summary:** ${triageResult.summary}
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage([595, 842]); // A4 size
+      const { height } = page.getSize();
+      
+      const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-**Recommendations:**
-${triageResult.recommendations.map(r => `- ${r}`).join('\n')}
+      let y = height - 80;
 
-**AI Reasoning:** ${triageResult.detailedReasoning}
-        `,
-        pdfUrl: "", // Will generate real PDF later
-        isSentToPatient: false
+      // Header
+      page.drawText('MEDI-SYNC', { x: 50, y: y, size: 28, font: boldFont, color: rgb(0, 0.4, 0.8) });
+      y -= 40;
+      page.drawText('AI TRIAGE REPORT', { x: 50, y: y, size: 18, font: boldFont });
+
+      y -= 50;
+      page.drawText(`Date: ${new Date().toLocaleDateString()}`, { x: 50, y: y, size: 12, font });
+
+      y -= 40;
+      page.drawText(`Patient Email: ${patient.email}`, { x: 50, y: y, size: 13, font: boldFont });
+
+      y -= 40;
+      const urgencyColor = triageResult.urgencyLevel === 'Emergency' ? rgb(0.9, 0.1, 0.1) : rgb(1, 0.55, 0);
+      page.drawText(`Urgency: ${triageResult.urgencyLevel} (${triageResult.urgencyScore}%)`, { 
+        x: 50, y: y, size: 16, font: boldFont, color: urgencyColor 
       });
 
-      console.log(`✅ Report Generated: ${report._id}`);
-      return report;
-    } catch (error) {
-      console.error("Report Generation Failed:", error);
-      throw error;
+      y -= 60;
+      page.drawText('Summary', { x: 50, y: y, size: 14, font: boldFont });
+      y -= 25;
+      page.drawText(triageResult.summary, { x: 50, y: y, size: 11, font, maxWidth: 480 });
+
+      y -= 60;
+      page.drawText('Recommendations', { x: 50, y: y, size: 14, font: boldFont });
+      y -= 30;
+
+      triageResult.recommendations?.forEach((rec, i) => {
+        page.drawText(`• ${rec}`, { x: 60, y: y, size: 11, font });
+        y -= 28;
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      
+      return {
+        pdfBase64: Buffer.from(pdfBytes).toString('base64'),
+        fileName: `MediSync_Triage_Report_${Date.now()}.pdf`
+      };
+    } catch (e) {
+      console.error("PDF Generation Failed:", e);
+      throw e;
     }
+  }
+
+  async createReportRecord(triageResult, patient, pdfData) {
+    const report = await GeneratedReport.create({
+      patientId: patient._id,
+      title: `Triage Report - ${triageResult.urgencyLevel}`,
+      contentMarkdown: triageResult.summary,
+      pdfBase64: pdfData.pdfBase64,
+      pdfFileName: pdfData.fileName,
+      isSentToPatient: false
+    });
+    return report;
   }
 }
 

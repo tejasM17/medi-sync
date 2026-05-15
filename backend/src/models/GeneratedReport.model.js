@@ -6,6 +6,7 @@ const generatedReportSchema = new mongoose.Schema({
   doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor' },
   title: String,
   contentMarkdown: String,
+  pdfBase64: String,
   pdfUrl: String,
   isSentToPatient: { type: Boolean, default: false },
   sentAt: Date,
