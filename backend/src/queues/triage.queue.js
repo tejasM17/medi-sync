@@ -1,44 +1,33 @@
 // backend/src/queues/triage.queue.js
-const { Queue, Worker } = require('bullmq');
-const Redis = require('ioredis');
+const AIService = require('../services/ai.service');
+const ReportGeneratorService = require('../services/reportGenerator.service');
+const Patient = require('../models/Patient.model');
 
-const connection = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null,
-});
+const triageQueue = {
+  add: async (name, data) => {
+    console.log(`📤 [Queue] New triage job for email: ${data.emailId}`);
 
-const triageQueue = new Queue('triage-queue', { 
-  connection,
-  defaultJobOptions: {
-    removeOnComplete: true,
-    removeOnFail: false,
+    setTimeout(async () => {
+      try {
+        // Step 1: AI Analysis
+        const triageResult = await AIService.analyzeSymptoms(data.body);
+
+        // Step 2: Find Patient
+        const patient = await Patient.findById(data.patientId);
+
+        // Step 3: Generate Report
+        await ReportGeneratorService.generateReport(triageResult, patient, data);
+
+        console.log(`🎉 Full Triage Pipeline Completed for ${data.emailId}`);
+      } catch (err) {
+        console.error("Pipeline Error:", err);
+      }
+    }, 2000);
+
+    return { id: Date.now().toString() };
   }
-});
+};
 
-console.log('✅ BullMQ Triage Queue Initialized');
-
-// Basic Worker (for now)
-const triageWorker = new Worker('triage-queue', async (job) => {
-  console.log(`🔄 Processing triage job #${job.id} for email: ${job.data.emailId}`);
-  
-  // Placeholder for AI Agents (will expand in Phase 11)
-  const result = {
-    urgencyLevel: "Urgent",
-    urgencyScore: 78,
-    summary: "Patient has severe headache with blurred vision - High priority case.",
-    recommendations: ["Immediate medical evaluation recommended", "Rule out serious neurological conditions"],
-    processedAt: new Date().toISOString()
-  };
-
-  console.log("✅ AI Triage Completed:", result);
-  return result;
-}, { connection });
-
-triageWorker.on('completed', (job) => {
-  console.log(`🎉 Triage Job ${job.id} completed!`);
-});
-
-triageWorker.on('failed', (job, err) => {
-  console.error(`❌ Triage Job ${job.id} failed:`, err.message);
-});
+console.log('✅ Mock AI Pipeline Ready');
 
 module.exports = { triageQueue };
