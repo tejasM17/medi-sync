@@ -1,63 +1,52 @@
 // frontend/src/App.jsx
 import { useState } from 'react';
-import { Menu, X, Bell, User } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import Dashboard from './components/Dashboard';
+import Reports from './components/Reports';
 
 function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex">
       {/* Sidebar */}
-      <div className={`bg-zinc-900 border-r border-zinc-800 w-64 flex-shrink-0 transition-all ${sidebarOpen ? 'block' : 'hidden md:block'}`}>
+      <div className={`bg-zinc-900 border-r border-zinc-800 w-64 transition-all ${sidebarOpen ? '' : 'hidden md:block'}`}>
         <div className="p-6">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center">
-              <span className="text-black font-bold">M</span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight">Medi-Sync</h1>
+            <div className="w-9 h-9 bg-cyan-500 rounded-2xl flex items-center justify-center text-black font-bold text-xl">M</div>
+            <h1 className="text-3xl font-bold">Medi-Sync</h1>
           </div>
 
-          <nav className="space-y-2">
-            <a href="#" className="flex items-center gap-3 px-4 py-3 bg-zinc-800 rounded-xl text-cyan-400">
-              <Menu size={20} /> Dashboard
-            </a>
-            <a href="#" className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-xl">
-              Live Cases
-            </a>
-            <a href="#" className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-xl">
+          <nav className="space-y-1">
+            <button onClick={() => setActiveTab('dashboard')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl ${activeTab === 'dashboard' ? 'bg-zinc-800 text-cyan-400' : 'hover:bg-zinc-800'}`}>
+              Dashboard
+            </button>
+            <button onClick={() => setActiveTab('reports')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl ${activeTab === 'reports' ? 'bg-zinc-800 text-cyan-400' : 'hover:bg-zinc-800'}`}>
               Reports
-            </a>
-            <a href="#" className="flex items-center gap-3 px-4 py-3 hover:bg-zinc-800 rounded-xl">
-              Traces
-            </a>
+            </button>
           </nav>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Area */}
       <div className="flex-1">
-        <header className="border-b border-zinc-800 bg-zinc-900 p-5 flex items-center justify-between">
+        <header className="bg-zinc-900 border-b border-zinc-800 p-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden">
               <Menu size={24} />
             </button>
-            <h2 className="text-xl font-semibold">Doctor Dashboard</h2>
+            <h2 className="text-2xl font-semibold">
+              {activeTab === 'dashboard' ? 'Live Dashboard' : 'Generated Reports'}
+            </h2>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-zinc-800 rounded-lg">
-              <Bell size={20} />
-            </button>
-            <div className="flex items-center gap-3 bg-zinc-800 px-4 py-2 rounded-2xl">
-              <User size={20} />
-              <span>Dr. Chidananda</span>
-            </div>
-          </div>
+          <div className="text-sm text-zinc-400">Dr. Chidananda • Bengaluru</div>
         </header>
 
         <main className="p-8">
-          <Dashboard />
+          {activeTab === 'dashboard' ? <Dashboard /> : <Reports />}
         </main>
       </div>
     </div>
