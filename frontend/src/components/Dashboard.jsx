@@ -10,7 +10,9 @@ const Dashboard = () => {
   const [selectedCase, setSelectedCase] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const simulatePatientEmail = async () => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+  const handleStartTriage = async () => {
     setIsProcessing(true);
     try {
       const mockData = {
@@ -18,7 +20,7 @@ const Dashboard = () => {
       };
 
       // POST to Python Backend
-      const res = await axios.post('http://localhost:8000/api/incoming-patient', mockData);
+      const res = await axios.post(`${apiBaseUrl}/api/incoming-patient`, mockData);
       console.log("Task created:", res.data.task_id);
 
       // Refresh tasks after a short delay to see the new task
@@ -33,7 +35,7 @@ const Dashboard = () => {
   const fetchTasks = async () => {
     try {
       // GET all cases from Python Backend
-      const res = await axios.get('http://localhost:8000/api/incoming-patient');
+      const res = await axios.get(`${apiBaseUrl}/api/incoming-patient`);
       const tasksArray = Object.values(res.data.tasks || {}).sort((a, b) => 
         new Date(b.timestamp) - new Date(a.timestamp)
       );

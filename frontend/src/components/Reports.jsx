@@ -9,9 +9,11 @@ const Reports = () => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [fetchingReport, setFetchingReport] = useState(false);
 
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
   const fetchTasks = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/incoming-patient');
+      const res = await axios.get(`${apiBaseUrl}/api/incoming-patient`);
       const tasksArray = Object.values(res.data.tasks || {}).filter(t => t.status === 'completed');
       setTasks(tasksArray);
     } catch (err) {
@@ -28,7 +30,7 @@ const Reports = () => {
   const viewDetailedReport = async (taskId) => {
     setFetchingReport(true);
     try {
-      const res = await axios.get(`http://localhost:8000/api/reports/${taskId}`);
+      const res = await axios.get(`${apiBaseUrl}/api/reports/${taskId}`);
       setSelectedReport(res.data);
     } catch (err) {
       alert("Failed to fetch structured report: " + err.message);

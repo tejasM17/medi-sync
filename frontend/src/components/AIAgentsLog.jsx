@@ -5,7 +5,8 @@ const AIAgentsLog = () => {
   const [logs, setLogs] = useState([]);
 
   useEffect(() => {
-    const eventSource = new EventSource('http://localhost:8000/api/ai-logs');
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const eventSource = new EventSource(`${apiBaseUrl}/api/ai-logs`);
     
     eventSource.onmessage = (event) => {
       try {
