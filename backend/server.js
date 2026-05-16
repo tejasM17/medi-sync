@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const webhookRoutes = require('./src/routes/webhook.routes');
 const connectDB = require('./src/config/db.config');
 const reportsRoutes = require('./src/routes/reports.routes');
+const aiLogsRoutes = require('./src/routes/ai-logs.routes');
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ const startServer = async () => {
 
   app.use('/api/webhook', webhookRoutes);
   app.use('/api/reports', reportsRoutes);
+  app.use('/api/ai-logs', aiLogsRoutes);
   
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

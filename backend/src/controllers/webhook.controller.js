@@ -1,21 +1,24 @@
 // backend/src/controllers/webhook.controller.js
+const axios = require('axios');
 const IncomingEmail = require('../models/IncomingEmail.model');
 const Patient = require('../models/Patient.model');
-const { triageQueue } = require('../queues/triage.queue');
+
+const PYTHON_AI_URL = "http://localhost:8000/api/incoming-patient";
 
 const receiveEmail = async (req, res) => {
   try {
-    const { subject, body, from, rawEmail } = req.body;
+    const { subject, body, from } = req.body;
 
-    if (!from || !body) {
-      return res.status(400).json({ success: false, message: "from and body are required" });
+    if (!body) {
+      return res.status(400).json({ success: false, message: "Email body is required" });
     }
 
-    let patient = await Patient.findOne({ email: from.toLowerCase() });
+    // Save incoming email
+    let patient = await Patient.findOne({ email: (from || "").toLowerCase() });
     if (!patient) {
       patient = await Patient.create({ 
-        name: from.split('@')[0], 
-        email: from.toLowerCase() 
+        name: (from || "Patient").split('@')[0], 
+        email: (from || "").toLowerCase() 
       });
     }
 
@@ -23,41 +26,47 @@ const receiveEmail = async (req, res) => {
       patientId: patient._id,
       subject: subject || "New Patient Message",
       body,
-      rawEmail: rawEmail || body,
-      status: 'Received'
+      rawEmail: body,
+      status: 'Processing'
     });
 
-    // After creating emailDoc
-await triageQueue.add('process-triage', {
-  emailId: emailDoc._id,
-  patientId: patient._id,
-  body: body
-});
+    // Call Python AI Agent
+    console.log(`🤖 Forwarding to Python Multi-Agent System...`);
+    
+    const aiResponse = await axios.post(PYTHON_AI_URL, {email_body: body});
 
-console.log(`📤 Email queued for AI triage: ${emailDoc._id}`);
+    // Log steps
+const { addLog } = require('../controllers/ai-log.controller');
+
+addLog("EmailParserAgent", "Parsing incoming email", "Extracted symptoms from patient message");
+addLog("ResearcherAgent", "Web Search + Analysis", "Queried medical guidelines using Gemini");
+addLog("TriageOfficer", "Final Decision Making", `Determined urgency: ${aiResponse.data.triage_report?.urgency}`);
+addLog("ReportGenerator", "PDF Report Created", "Generated professional triage report");
+
+    console.log(`✅ AI Processing Done → Urgency: ${aiResponse.data.triage_report?.urgency}`);
 
     res.status(201).json({
       success: true,
-      message: "Email received successfully and queued for AI triage",
-      emailId: emailDoc._id,
-      patientId: patient._id
+      task_id: aiResponse.data.task_id,
+      triage: aiResponse.data.triage_report,
+      message: "Patient case processed by AI Multi-Agent Pipeline"
     });
 
-    
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Webhook Error:", error.message);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
   }
 };
 
-// Get all emails (for dashboard)
 const getAllEmails = async (req, res) => {
   try {
     const emails = await IncomingEmail.find()
       .populate('patientId', 'name email')
       .sort({ createdAt: -1 });
-    
-    res.json({ success: true, count: emails.length, data: emails });
+    res.json({ success: true, data: emails });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

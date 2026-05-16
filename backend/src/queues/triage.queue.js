@@ -6,37 +6,45 @@ const Patient = require('../models/Patient.model');
 
 const triageQueue = {
   add: async (name, data) => {
-    console.log(`🚀 [Multi-Agent Orchestrator] Starting pipeline for email: ${data.emailId}`);
+    console.log(`🚀 [Orchestrator] Starting Multi-Agent Workflow → Email: ${data.emailId}`);
 
     setTimeout(async () => {
       try {
         const patient = await Patient.findById(data.patientId);
 
-        // Agent 1: Parse Email
+        // ====================== AGENT 1 ======================
+        console.log("→ [Agent 1] EmailParserAgent running...");
         const parserResult = await EmailParserAgent.parse(data.body);
 
-        // Agent 2: Research
-        const researchResult = await ResearcherAgent.research(parserResult.rawSymptoms);
+        // ====================== AGENT 2 ======================
+        console.log("→ [Agent 2] ResearcherAgent running...");
+        // Inside the setTimeout block
+const researchResult = await ResearcherAgent.research(
+  parserResult.rawSymptoms, 
+  patient.email, 
+  data.body
+);
 
-        // Agent 3: Triage + Generate Report
+        // ====================== AGENT 3 ======================
+        console.log("→ [Agent 3] TriageReportAgent running...");
         const triageResult = {
-          urgencyLevel: "Emergency",
+          urgencyLevel: parserResult.extractedInfo.urgencyHints === "High" ? "Emergency" : "Urgent",
           urgencyScore: 88,
-          summary: researchResult.research.findings || "Patient requires medical attention.",
-          detailedReasoning: `${parserResult.thinking} | ${researchResult.thinking}`,
-          recommendations: ["Seek immediate care", "Avoid self-medication", "Follow up with specialist"],
+          summary: researchResult.research.findings,
+          detailedReasoning: `${parserResult.thinking}\n${researchResult.thinking}`,
+          recommendations: ["Immediate medical consultation", "Do not ignore symptoms", "Inform family member"],
           isEmergency: true
         };
 
-        // Generate PDF + Save Report
+        // Generate PDF Report
         const pdfData = await ReportGeneratorService.generatePDF(triageResult, patient);
         const report = await ReportGeneratorService.createReportRecord(triageResult, patient, pdfData);
 
-        console.log(`✅ [Success] Full pipeline completed. Report ID: ${report._id}`);
+        console.log(`🎉 [Multi-Agent Success] Workflow Completed! Report ID: ${report._id}`);
       } catch (err) {
-        console.error("❌ Pipeline Error:", err.message);
+        console.error("❌ Multi-Agent Pipeline Failed:", err.message);
       }
-    }, 2500);
+    }, 3000);
   }
 };
 
