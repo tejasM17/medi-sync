@@ -1,109 +1,114 @@
-# Medi-Sync
+# Medi-Sync: AI Multi-Agent Triage System
 
-**Autonomous AI Healthcare Triage System**  
-A multi-agent autonomous pipeline that reads patient emails, triages urgency, generates reports, and notifies doctors — built for real-world impact.
+Medi-Sync is an intelligent medical triage platform that uses a multi-agent AI pipeline to analyze patient symptoms, perform medical research, and generate structured clinical reports. It combines a high-performance **Python AI Engine** with a modern **React Frontend** for real-time clinical decision support.
 
----
+## 🚀 Key Features
 
-## 🚀 Project Overview
-
-**Medi-Sync** is an intelligent healthcare triage system that automatically processes incoming patient emails using multiple AI agents. It prioritizes emergencies, generates professional medical reports (PDF), and allows doctors to review and send reports back to patients directly from the dashboard.
-
-**Perfect for Hackathon (Omium Multi-Agent Track)** — Webhook-driven, Multi-Agent, Tool-calling, Async workflow, Observability ready.
-
-### Key Features
-- Patient email intake via Webhook
-- Multi-Agent AI System (Researcher + Triage Officer + Report Generator)
-- Real-time urgency classification (Emergency / Urgent / Routine)
-- Automatic PDF Report Generation
-- Doctor Dashboard (Grok-inspired UI)
-- One-click "Send Report to Patient" via EmailJS (Free)
-- Full observability (ready for Omium SDK tracing)
+- **Multi-Agent Pipeline:** Collaboration between Researcher, Reflection, and Triage agents.
+- **Real-Time Monitoring:** Live "Thinking" logs streamed from agents to the dashboard via SSE.
+- **Structured Clinical Reports:** Professional medical assessments (REP-XXXX) with urgency levels.
+- **Dynamic Research:** Automatic searching of medical guidelines (Mayo Clinic, WHO, etc.).
+- **Responsive Dashboard:** Modern UI for doctors to manage cases and view deep-dive analysis.
 
 ---
 
-## 🛠 Tech Stack
+## 🏗️ Architecture & Repositories
 
-### Backend
-- **Node.js + Express**
-- **MongoDB Atlas** (Mongoose)
-- **BullMQ + Redis** (Async Queue)
-- **EmailJS** (Free email delivery)
+The system consists of two primary components:
 
-### Frontend
-- **React + Vite**
-- **Tailwind CSS**
-- **Lucide Icons + Framer Motion**
+1.  **Frontend (React/Vite):** [https://github.com/tejasM17/medi-sync](https://github.com/tejasM17/medi-sync)
+    - Modern dashboard for visualizing cases and AI logs.
+    - Connects to Python AI Service for real-time data.
+2.  **AI Backend (Python/FastAPI):** [https://github.com/SharathKumar-M/ai-agent](https://github.com/SharathKumar-M/ai-agent)
+    - Orchestrates the Multi-Agent system (LangChain & Google Gemini).
+    - Handles SSE log streaming and structured report generation.
 
 ---
 
-## 📁 Project Structure
+## 🛠️ Setup Instructions
 
-```
-medi-sync/
-├── backend/          # Node.js + Express API
-├── frontend/         # React + Vite Dashboard
-└── README.md
-```
-
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18+)
+- [Python](https://www.python.org/) (v3.10+)
+- [Google Gemini API Key](https://aistudio.google.com/)
 
 ---
 
-## ⚡ Quick Setup
-
-### 1. Clone the Repository
+### 1. Setup AI Backend (Python)
 ```bash
+# Clone the repository
+git clone https://github.com/SharathKumar-M/ai-agent.git
+cd ai-agent
+
+# Create and activate virtual environment
+python -m venv venv
+source venv/Scripts/activate  # Windows
+# source venv/bin/activate    # Mac/Linux
+
+# Install dependencies
+pip install fastapi uvicorn requests langchain-google-genai pydantic python-dotenv duckduckgo-search
+
+# Create .env file
+echo "GOOGLE_API_KEY=your_gemini_api_key_here" > .env
+
+# Run the server
+python main.py
+```
+*Backend will be live at: `http://localhost:8000`*
+
+---
+
+### 2. Setup Frontend (React)
+```bash
+# Clone the repository
 git clone https://github.com/tejasM17/medi-sync.git
-cd medi-sync
-```
+cd medi-sync/frontend
 
-### 2. Backend Setup
-```
-cd backend
+# Install dependencies
 npm install
 
-# Create .env file (see .env.example)
-cp .env.example .env
-```
-
-Important .env variables:
-
-MONGO_URI (MongoDB Atlas)
-EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY
-
-```
+# Run the development server
 npm run dev
 ```
-Backend runs on http://localhost:5000
+*Frontend will be live at: `http://localhost:5173`*
 
-### 3. Frontend Setup
+---
 
-```
-cd ../frontend
+### 3. Setup Node.js Middleware (Optional/Data Persistence)
+If you require MongoDB persistence for permanent case storage:
+```bash
+cd medi-sync/backend
 npm install
+# Configure MONGO_URI in .env
 npm run dev
 ```
-Frontend runs on http://localhost:3000
+*Middleware will be live at: `http://localhost:5000`*
 
+---
 
-🎯 How to Test (Demo Flow)
+## 📡 API Map (Python Backend)
 
-Start both Backend & Frontend
-Go to Doctor Dashboard
-Click "Simulate Patient Email"
-Check Backend console → AI Agents will process
-Refresh Dashboard → See new case
-Doctor can view report and send to patient
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/incoming-patient` | Submit a new case (triggers AI agents) |
+| `GET` | `/api/ai-logs` | SSE Stream for live agent thinking logs |
+| `GET` | `/api/incoming-patient` | Fetch all patient case history |
+| `GET` | `/api/reports/{id}` | Get structured professional clinical report |
 
+---
 
-🔮 Future Enhancements
+## 🧠 The Multi-Agent Workflow
 
-PDF Report Generation
-Multi-Agent AI with LangGraph
-Omium SDK Tracing (Bonus Points)
-Real Email Webhook Integration
-Doctor Authentication
+1.  **Submission:** Patient symptoms are sent to the pipeline.
+2.  **Researcher Agent:** Searches the web for clinical guidelines and red flags.
+3.  **Reflection Agent:** Self-critiques the research to ensure accuracy and medical safety.
+4.  **Triage Officer:** Makes the final decision on Urgency (High/Medium/Low) and provides guidance.
+5.  **Output:** A structured report is generated and displayed on the doctor's dashboard.
 
+---
 
-Built for Hackathon — Multi-Agent · Autonomy · Real Side Effects
-Team ZENITH | May 2026
+## 🤝 Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+This project is licensed under the MIT License.
