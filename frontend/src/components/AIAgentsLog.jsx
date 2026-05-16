@@ -1,26 +1,29 @@
 // frontend/src/components/AIAgentsLog.jsx
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 
 const AIAgentsLog = () => {
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchLogs = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/ai-logs');
-      setLogs(res.data.logs || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 2000); // Real-time feel
-    return () => clearInterval(interval);
+    const eventSource = new EventSource('http://localhost:8000/api/ai-logs');
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const log = JSON.parse(event.data);
+        setLogs((prev) => [log, ...prev].slice(0, 50)); // Keep newest at top
+      } catch (err) {
+        console.error("Error parsing SSE log:", err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("EventSource failed:", err);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   return (
@@ -28,31 +31,30 @@ const AIAgentsLog = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">🧠 AI Agents Observatory</h1>
-          <p className="text-zinc-400">Multi-Agent Collaboration • Live Thinking</p>
+          <p className="text-zinc-400">Multi-Agent Collaboration • Live Thinking (SSE)</p>
         </div>
-        <button 
-          onClick={() => axios.delete('http://localhost:5000/api/ai-logs')}
-          className="text-xs px-4 py-2 bg-zinc-800 hover:bg-red-600 rounded-xl"
-        >
-          Clear Logs
-        </button>
       </div>
 
       <div className="bg-zinc-900 rounded-3xl p-6 min-h-[600px]">
-        {loading ? (
-          <p className="text-center py-20 text-zinc-500">Waiting for AI activity...</p>
-        ) : logs.length === 0 ? (
-          <p className="text-center py-20 text-zinc-500">No activity yet. Simulate a patient email.</p>
+        {logs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-40 text-zinc-500 space-y-4">
+            <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin" />
+            <p>Listening for AI Agent activity...</p>
+          </div>
         ) : (
           <div className="space-y-4">
-            {logs.map((log) => (
-              <div key={log.id} className="bg-zinc-800 rounded-2xl p-5 border-l-4 border-cyan-500">
+            {logs.map((log, index) => (
+              <div 
+                key={index} 
+                className="bg-zinc-800 rounded-2xl p-5 border-l-4 border-cyan-500 animate-in slide-in-from-left duration-300"
+              >
                 <div className="flex justify-between text-xs mb-2 text-zinc-400">
-                  <span className="font-mono text-cyan-400">{log.agent}</span>
-                  <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  <span className="font-mono text-cyan-400 px-2 py-0.5 bg-cyan-400/10 rounded-md">
+                    {log.agent}
+                  </span>
+                  <span>{log.timestamp}</span>
                 </div>
-                <p className="text-white font-medium">{log.action}</p>
-                {log.details && <p className="text-sm text-zinc-400 mt-1">{log.details}</p>}
+                <p className="text-white font-medium">{log.message || log.action}</p>
               </div>
             ))}
           </div>

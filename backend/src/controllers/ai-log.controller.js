@@ -3,7 +3,7 @@ let aiLogs = []; // In-memory store (use DB in production)
 
 const addLog = (agent, action, details) => {
   const log = {
-    id: Date.now(),
+    id: Date.now() + Math.random(),
     timestamp: new Date().toISOString(),
     agent,
     action,
@@ -24,4 +24,10 @@ const clearLogs = (req, res) => {
   res.json({ success: true, message: "Logs cleared" });
 };
 
-module.exports = { addLog, getLogs, clearLogs };
+const externalLog = (req, res) => {
+  const { agent, action, details } = req.body;
+  const log = addLog(agent, action, details);
+  res.json({ success: true, log });
+};
+
+module.exports = { addLog, getLogs, clearLogs, externalLog };

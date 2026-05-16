@@ -7,6 +7,7 @@ const generatedReportSchema = new mongoose.Schema({
   title: String,
   contentMarkdown: String,
   pdfBase64: String,
+  pdfFileName: String,
   pdfUrl: String,
   isSentToPatient: { type: Boolean, default: false },
   sentAt: Date,

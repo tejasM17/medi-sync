@@ -1,10 +1,16 @@
 // backend/src/routes/webhook.routes.js
 const express = require('express');
 const router = express.Router();
-const { receiveEmail, getAllEmails } = require('../controllers/webhook.controller');
+const { receiveEmail, getAllEmails, receivePythonResult, startPythonProcessing } = require('../controllers/webhook.controller');
 
 // POST - Receive patient email (Main Webhook)
 router.post('/email', receiveEmail);
+
+// POST - Python notifies start of work
+router.post('/start-processing', startPythonProcessing);
+
+// POST - Receive processed result from Python AI
+router.post('/python-callback', receivePythonResult);
 
 // GET - View all received emails (Useful for Doctor Dashboard + Testing)
 router.get('/emails', getAllEmails);
