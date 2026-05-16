@@ -62,7 +62,7 @@ const Dashboard = () => {
         </div>
         
         <button
-          onClick={simulatePatientEmail}
+          onClick={handleStartTriage}
           disabled={isProcessing}
           className="flex items-center gap-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 px-6 py-3.5 rounded-2xl font-medium transition-all disabled:opacity-70 shadow-lg shadow-blue-500/20"
         >
